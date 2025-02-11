@@ -3,11 +3,21 @@ File: Client.py
 Authors: Razan Mohamed, Mahrosh Chaudry
 """
 import socket
+import time
+
 
 def start_client():
     try:
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect(('localhost', 12345))  # Connect to the server
+        try:
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_socket.settimeout(5) 
+            client_socket.connect(('localhost', 12345))  # Connect to the server
+        except:
+            print("Server is not available. Exiting...")
+            client_socket.close()
+            
+            return  
+        
 
         client_name = client_socket.recv(1024).decode()
         print(f"Client name: {client_name}")
@@ -16,7 +26,11 @@ def start_client():
             message = input("Enter message to send: ")
             if message.lower() == 'exit': # end the loop if the user wants to exit
                 client_socket.send(message.encode())
-                break
+                response = client_socket.recv(1024).decode()
+                if response == 'exit ACK':
+                    print("Connection closed.")
+                    client_socket.close()
+                    break
             elif message.lower() == 'status': # print the cache
                 #get the chace from the server
                 client_socket.send(message.encode())
@@ -32,9 +46,7 @@ def start_client():
 
         print("close the connection")
         client_socket.close()
-    except ConnectionRefusedError:
-        print("Cannot connect to the server.")
-        client_socket.close()
+
     except KeyboardInterrupt:
         print("Exiting...")
         client_socket.close()
