@@ -10,7 +10,6 @@ import os
 
 maxClients = 3
 client_counter = 0
-connected_clients = []
 clientCache = []    # Cache of clients that have connected
 
 def get_current_formatted_time():
@@ -40,7 +39,6 @@ def send_file_to_client(client_socket, file_name):
 def handle_client(client_socket, addr, client_name):
     global clientCache
     global client_counter
-    global connected_clients
     while True:
         try:
             data = client_socket.recv(1024).decode() #recieves 1024 bytes of data and decodes to string
@@ -50,7 +48,7 @@ def handle_client(client_socket, addr, client_name):
                 #add disconnection time to cache
                 print(f"Connection from {client_name} ({addr}) closed.")
                 clientCache.append(f"Client Name: {client_name}  Connection closed at {get_current_formatted_time()} ")
-                connected_clients.remove(client_socket)
+                client_counter -= 1
                 client_socket.send("exit ACK".encode())
                 client_socket.close()
                 
@@ -59,7 +57,6 @@ def handle_client(client_socket, addr, client_name):
                 cache_string = "\n".join(clientCache)
                 client_socket.send(cache_string.encode())
                 #print cache
-                print(len(connected_clients))
                 print("Client Cache:")
                 for i in clientCache:
                     print(i)
@@ -84,7 +81,7 @@ def start_server():
     global clientCache
     global client_counter
     global client_number
-    global connected_clients
+
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind(('localhost', 12345))  # Bind to localhost on port 12345
     server_socket.listen(0)
@@ -93,15 +90,14 @@ def start_server():
     while True:
         try:
           #  if(client_counter < maxClients):
-            if len(connected_clients) < maxClients:
+            if client_counter < maxClients:
 
                 client_socket, addr = server_socket.accept() # Accept a connection
                 client_name = f"[Client {client_counter+1:02d}]"
                 print(f"Connection from {client_name}. Address: {addr}")
+                client_counter += 1 
 
-                client_number = client_counter
                 client_socket.send(client_name.encode())
-                connected_clients.append(client_socket)
                     #add client to cache
                 clientCache.append(f"Client Name: {client_name}  Connection accepted at {get_current_formatted_time()} ")
                 client_handler = threading.Thread(target=handle_client, args=(client_socket, addr, client_name))

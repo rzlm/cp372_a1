@@ -3,7 +3,6 @@ File: Client.py
 Authors: Razan Mohamed, Mahrosh Chaudry
 """
 import socket
-import time
 
 
 def start_client():
